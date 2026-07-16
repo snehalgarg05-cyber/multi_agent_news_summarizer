@@ -1,0 +1,9 @@
+langchain==0.3.25
+langchain-groq==0.3.2
+langgraph==0.4.8
+langchain-community==0.3.24
+streamlit==1.45.1
+requests==2.32.3
+python-dotenv==1.1.0
+newspaper3k==0.2.8
+lxml[html_clean]==5.4.0
