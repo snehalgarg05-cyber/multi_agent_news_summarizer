@@ -39,7 +39,7 @@ load_dotenv()
 # Result: llama3-70b runs at ~800 tokens/second — 10x faster than
 # OpenAI's API and completely FREE on the free tier.
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="openai/gpt-oss-120b",
     temperature=0,        # 0 = deterministic, consistent categorization
     api_key=os.getenv("GROQ_API_KEY")
 )
