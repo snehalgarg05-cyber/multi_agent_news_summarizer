@@ -1,15 +1,12 @@
-# 📰 Multi-Agent News Summarizer
+# 📰 Multi-Agent AI News Summarizer
 
-> A production-grade AI system using **LangGraph multi-agent orchestration** to fetch, categorize, summarize, and present real-time news with intelligence.
+🚀 **Live Demo:** https://multi-agent-news-summarizer.onrender.com/
 
-![Python](https://img.shields.io/badge/Python-3.10+-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![LangGraph](https://img.shields.io/badge/LangGraph-0.4.8-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)
-![Groq](https://img.shields.io/badge/Groq-Llama3.3_70B-F55036?style=for-the-badge)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.45-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+A production-grade multi-agent AI system that automatically fetches real news, categorizes it by topic, summarizes each section, and delivers a clean executive briefing — powered by **Groq's OpenAI-compatible GPT-4o 120B model** and orchestrated with **LangGraph**.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 User Query
@@ -40,123 +37,114 @@ User Query
     Streamlit UI
 ```
 
-**Orchestrated by LangGraph StateGraph** — each agent reads from and writes to a shared `AgentState` TypedDict.
+---
+
+## How It Works
+
+Type a topic like **"artificial intelligence"** and click Run:
+
+1. **Fetcher Agent** calls NewsAPI (50,000+ sources - BBC, TechCrunch, Reuters) and fetches the latest 10 articles
+2. **Categorizer Agent** sends all articles to the LLM in one batch call - it intelligently groups them by topic (AI & ML, Tech Business, Finance, etc.)
+3. **Summarizer Agent** writes an abstractive summary for each category - Overview, Key Developments, and What This Means
+4. **Formatter Agent** writes a 3-sentence executive briefing and assembles the full markdown output
+5. **Streamlit UI** renders everything with stats, source links, and an agent processing log
 
 ---
 
-## 🚀 Features
+## Tech Stack
 
-- **4 Specialized AI Agents** — each with a single, focused responsibility
-- **Real-time news** from 50,000+ sources via NewsAPI
-- **LLM-powered categorization** — understands context, not just keywords
-- **Abstractive summarization** — synthesizes multiple articles, not just copy-paste
-- **Executive briefing** — 3-sentence "if you had 30 seconds" summary
-- **Conditional routing** — graceful error handling in the pipeline
-- **Beautiful Streamlit UI** — dark galaxy theme, live processing log
-
----
-
-## 🧠 Concepts Demonstrated
-
-| Concept | Where |
-|---------|-------|
-| LangGraph StateGraph | `pipeline.py` |
-| Shared agent state (TypedDict) | `state.py` |
-| Conditional edges / branching | `pipeline.py` → `should_continue()` |
-| Structured LLM output (JSON mode) | `categorizer_agent.py` |
-| Batch processing | `categorizer_agent.py` → `_categorize_batch()` |
-| Abstractive summarization | `summarizer_agent.py` |
-| Chain-of-thought prompting | `summarizer_agent.py` prompt |
-| Error nodes in agent graphs | `pipeline.py` → `handle_error()` |
-| Separation of concerns | One agent = one job |
+| Tool | Purpose |
+|---|---|
+| **LangGraph** | Agent graph orchestration - nodes, edges, shared state |
+| **LangChain** | Clean LLM interface (ChatGroq, SystemMessage, HumanMessage) |
+| **Groq + GPT-4o 120B** | Ultra-fast inference via Groq's LPU hardware |
+| **NewsAPI** | Real-time news from 50,000+ sources |
+| **Streamlit** | Python to web UI with zero HTML/CSS |
+| **TypedDict** | Type-safe shared state between agents |
+| **python-dotenv** | Secure API key management |
 
 ---
 
-## ⚙️ Setup
+## Project Structure
 
-### 1. Clone & Install
+```
+multi_agent_news_summarizer/
+├── app.py                    # Streamlit UI
+├── pipeline.py               # LangGraph graph wiring
+├── state.py                  # Shared AgentState TypedDict
+├── agents/
+│   ├── fetcher_agent.py      # NewsAPI → raw articles
+│   ├── categorizer_agent.py  # LLM topic grouping
+│   ├── summarizer_agent.py   # LLM summaries per category
+│   └── formatter_agent.py    # Executive briefing + markdown
+├── requirements.txt
+└── .env                      # API keys (never committed)
+```
+
+---
+
+## Key Engineering Decisions
+
+**Batch Categorization** - All 10 articles categorized in 1 LLM call instead of 10 separate calls. Result: 10x fewer API calls, faster, cheaper.
+
+**Conditional Edge** - After the Fetcher runs, LangGraph checks success/failure and routes to error handler automatically instead of crashing.
+
+**Temperature Tuning** - Temperature 0 for categorization (deterministic), 0.3-0.4 for summaries (better prose quality).
+
+**Abstractive Summarization** - LLM reads multiple articles and writes a new paragraph in its own words, not just copying sentences.
+
+**Fallback Handling** - If LLM fails on one category, pipeline logs the error and continues. Never crashes on partial failure.
+
+**Query Expansion** - "AI" expands to "artificial intelligence OR machine learning OR LLM" for better NewsAPI results.
+
+---
+
+## Setup & Run Locally
+
 ```bash
-git clone https://github.com/snehalgarg05-cyber/multi-agent-news-summarizer
-cd multi-agent-news-summarizer
+# Clone the repo
+git clone https://github.com/snehalgarg05-cyber/multi_agent_news_summarizer
+cd multi_agent_news_summarizer
+
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### 2. Get Free API Keys
-- **Groq** (LLM): https://console.groq.com → Free tier, no credit card
-- **NewsAPI**: https://newsapi.org → Free tier, 100 req/day
-
-### 3. Configure Environment
-```bash
+# Add your API keys
 cp .env.example .env
-# Edit .env with your API keys
-```
+# Add GROQ_API_KEY and NEWS_API_KEY to .env
 
-### 4. Run
-```bash
+# Run
 streamlit run app.py
 ```
 
-Open `http://localhost:8501` in your browser.
-
 ---
 
-## 📁 Project Structure
+## State Flow
+
+The same `AgentState` TypedDict gets richer at every step:
 
 ```
-multi-agent-news-summarizer/
-│
-├── app.py                    # Streamlit UI
-├── pipeline.py               # LangGraph orchestration
-├── state.py                  # Shared AgentState TypedDict
-├── requirements.txt
-├── .env.example
-│
-└── agents/
-    ├── fetcher_agent.py      # Agent 1: NewsAPI → structured articles
-    ├── categorizer_agent.py  # Agent 2: LLM topic classification
-    ├── summarizer_agent.py   # Agent 3: Per-category summarization
-    └── formatter_agent.py    # Agent 4: Executive briefing + markdown
+INITIAL   → { user_query, max_articles }
+FETCHER   → + { raw_articles, fetch_status }
+CATEGORIZER → + { categorized_articles }
+SUMMARIZER  → + { summaries }
+FORMATTER   → + { final_output }
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## What I'd Improve Next
 
-| Layer | Technology |
-|-------|-----------|
-| Agent Orchestration | LangGraph 0.4 |
-| LLM Framework | LangChain 0.3 |
-| LLM Model | Llama 3.3 70B via Groq |
-| News Data | NewsAPI |
-| UI | Streamlit |
-| Language | Python 3.10+ |
+- **Streaming output** using `.astream()` so users see results as they generate
+- **Map-Reduce** for 100+ articles to handle context window limits
+- **User memory** to personalize briefings based on reading history
+- **Daily email digest** scheduled every morning automatically
+- **Source diversity scoring** to prevent over-representation from one outlet
 
 ---
 
-## 💡 Key Design Decisions
+## Author
 
-**Why LangGraph over plain Python?**
-Conditional branching, automatic state merging, and easy extensibility. Adding a 5th agent requires just one `add_node` + `add_edge` call.
-
-**Why Groq?**
-800 tokens/second on Llama 3.3 70B — free tier, no billing. Ideal for projects and demos.
-
-**Why separate Categorizer and Summarizer agents?**
-Single responsibility. Mixing categorization logic into the summarizer creates prompt confusion and harder debugging.
-
-**Why batch categorization?**
-One API call for all articles instead of N calls = 10x faster, 10x cheaper in production.
-
----
-
-## 🔮 Future Improvements
-
-- [ ] Add streaming output (real-time token display)
-- [ ] Implement Map-Reduce for 100+ article summarization
-- [ ] Add memory across sessions (remember user preferences)
-- [ ] Email digest feature (send summary to inbox)
-- [ ] Deploy to Streamlit Cloud / HuggingFace Spaces
-
----
-
-*Built by Snehal Garg · VIT Bhopal · B.Tech CSE 2027*
+**Snehal Garg** | VIT Bhopal | B.Tech CSE 2027
+- LinkedIn: [linkedin.com/in/snehal-garg](https://linkedin.com/in/snehal-garg)
+- GitHub: [github.com/snehalgarg05-cyber](https://github.com/snehalgarg05-cyber)
